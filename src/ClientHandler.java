@@ -3,17 +3,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable {
 
+    private final Socket client;
     private final BufferedReader in;
     private final PrintWriter out;
-    private final List<PrintWriter> list;
+    private final List<PrintWriter> writers;
 
-    public ClientHandler(BufferedReader in, PrintWriter out, List<PrintWriter> list) {
+    public ClientHandler(Socket client, BufferedReader in, PrintWriter out, List<PrintWriter> writers) {
+        this.client = client;
         this.in = in;
         this.out = out;
-        this.list = list;
+        this.writers = writers;
     }
 
     public void run() {
@@ -24,14 +27,20 @@ public class ClientHandler implements Runnable {
             String message = null;
             while ((message = in.readLine()) != null) {
                 System.out.println(login + ": " + message);
+                for (var writer : writers) {
+                    if (writer != out) {
+                        writer.println(login + ": " + message);
+                    }
+                }
             }
         } catch (IOException e) {
             System.err.println("[ОШИБКА] " + e.getMessage());
         } finally {
-            list.remove(out);
+            writers.remove(out);
             try {
                 in.close();
                 out.close();
+                client.close();
             } catch (IOException e) {
                 System.err.println("[ОШИБКА] " + e.getMessage());
             }
