@@ -18,7 +18,7 @@ public class Server {
             while (true) {
                 var client = server.accept();
                 var in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                var out = new PrintWriter(client.getOutputStream());
+                var out = new PrintWriter(client.getOutputStream(), true);
                 writers.add(out);
                 var thread = new Thread(new ClientHandler(client, in, out, writers));
                 thread.start();
